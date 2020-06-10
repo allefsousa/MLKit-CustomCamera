@@ -5,12 +5,14 @@ import android.content.ComponentName
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
 import android.util.Log
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.exifinterface.media.ExifInterface
 import java.io.IOException
@@ -38,7 +40,7 @@ internal fun openImagePicker(activity: Activity) {
 }
 
 @Throws(IOException::class)
-internal fun loadImage(context: Context, imageUri: Uri, maxImageDimension: Int): Bitmap? {
+internal fun loadImageGallery(context: Context, imageUri: Uri, maxImageDimension: Int): Bitmap? {
     var inputStreamForSize: InputStream? = null
     var inputStreamForImage: InputStream? = null
     try {
@@ -111,4 +113,32 @@ private fun getExifOrientationTag(resolver: ContentResolver, imageUri: Uri): Int
 
 fun isPortraitMode(context: Context): Boolean =
     context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+
+internal fun requestRuntimePermissions(activity: Activity) {
+
+    val allNeededPermissions = getRequiredPermissions(activity).filter {
+        ContextCompat.checkSelfPermission(activity, it) != PackageManager.PERMISSION_GRANTED
+    }
+
+    if (allNeededPermissions.isNotEmpty()) {
+        ActivityCompat.requestPermissions(
+            activity, allNeededPermissions.toTypedArray(), /* requestCode= */ 0
+        )
+    }
+}
+
+internal fun allPermissionsGranted(context: Context): Boolean = getRequiredPermissions(
+    context
+)
+    .all { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
+
+private fun getRequiredPermissions(context: Context): Array<String> {
+    return try {
+        val info = context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)
+        val ps = info.requestedPermissions
+        if (ps != null && ps.isNotEmpty()) ps else arrayOf()
+    } catch (e: Exception) {
+        arrayOf()
+    }
+}
 

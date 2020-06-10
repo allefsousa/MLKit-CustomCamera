@@ -7,10 +7,10 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import com.developer.allef.boilerplateapp.extensions.*
 import com.developer.allef.boilerplateapp.extensions.REQUEST_CODE_PHOTO_LIBRARY
-import com.developer.allef.boilerplateapp.extensions.loadImage
+import com.developer.allef.boilerplateapp.extensions.loadImageGallery
 import com.developer.allef.boilerplateapp.extensions.openImagePicker
-import com.developer.allef.boilerplateapp.extensions.openOtherAppActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.IOException
 
@@ -31,6 +31,7 @@ class MainActivity : AppCompatActivity() {
         btn_image_picker.setOnClickListener {
             openImagePicker(this)
         }
+
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -47,7 +48,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setImageToImageView(imageUri:Uri){
         try {
-            inputBitmap = loadImage(
+            inputBitmap = loadImageGallery(
                 this, imageUri,
                 MAX_IMAGE_DIMENSION
             )
@@ -55,6 +56,13 @@ class MainActivity : AppCompatActivity() {
         } catch (e: IOException) {
             Log.e(MainActivity::class.java.simpleName, "Failed to load file: $imageUri", e)
             return
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (!allPermissionsGranted(this)) {
+            requestRuntimePermissions(this)
         }
     }
 }
